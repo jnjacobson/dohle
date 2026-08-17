@@ -69,7 +69,7 @@ local function paste(text)
     local pb = hs.pasteboard
     local previous = pb.getContents()
     pb.setContents(text)
-    hs.eventtap.keyStroke({ "cmd" }, "v")
+    hs.eventtap.keyStroke({ "cmd" }, "v", 0)
     -- restore the old clipboard once the paste has gone through
     hs.timer.doAfter(0.5, function()
         if previous then pb.setContents(previous) end
