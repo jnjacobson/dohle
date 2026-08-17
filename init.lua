@@ -1,0 +1,186 @@
+-- whisper-hotkey: ⌥Space toggles mic recording; on stop, the audio is sent to
+-- OpenAI's transcription API and the result is pasted at the current text caret.
+-- Esc aborts while recording or transcribing.
+
+local M = {}
+
+local DIR = os.getenv("HOME") .. "/Documents/GitHub/whisper-hotkey"
+package.path = DIR .. "/?.lua;" .. package.path
+local pill = require("pill")
+local RECORDER = DIR .. "/recorder"
+local AUDIO_FILE = "/tmp/whisper-hotkey.m4a"
+local MODEL = "gpt-transcribe"
+local KEY_FILE = os.getenv("HOME") .. "/.config/openai/api_key"
+local GLOSSARY_FILE = DIR .. "/glossary.txt"
+
+local SND_START = hs.sound.getByName("Purr")
+local SND_STOP = hs.sound.getByName("Pop")
+local SND_ABORT = hs.sound.getByName("Bottle")
+
+local recordTask = nil
+local curlTask = nil
+local aborted = false
+local escKey -- defined below
+
+local function setStatus(state)
+    if state == "recording" then
+        pill.show({ red = 1, green = 0.23, blue = 0.19, alpha = 1 }, true)
+    elseif state == "transcribing" then
+        pill.show({ red = 1, green = 0.62, blue = 0.04, alpha = 1 }, false)
+    else
+        pill.hide()
+    end
+end
+
+local function idle()
+    setStatus(nil)
+    escKey:disable()
+    os.remove(AUDIO_FILE)
+end
+
+local function apiKey()
+    local key = os.getenv("OPENAI_API_KEY")
+    if key and #key > 0 then return key end
+    local f = io.open(KEY_FILE, "r")
+    if f then
+        key = f:read("*l")
+        f:close()
+        if key and #key > 0 then return key end
+    end
+    return nil
+end
+
+-- glossary.txt: one name/term per line, '#' for comments; sent as keywords[]
+local function glossary()
+    local terms = {}
+    local f = io.open(GLOSSARY_FILE, "r")
+    if not f then return terms end
+    for line in f:lines() do
+        line = line:gsub("^%s+", ""):gsub("%s+$", "")
+        if #line > 0 and line:sub(1, 1) ~= "#" then
+            table.insert(terms, line)
+        end
+    end
+    f:close()
+    return terms
+end
+
+local function paste(text)
+    local pb = hs.pasteboard
+    local previous = pb.getContents()
+    pb.setContents(text)
+    hs.eventtap.keyStroke({ "cmd" }, "v")
+    -- restore the old clipboard once the paste has gone through
+    hs.timer.doAfter(0.5, function()
+        if previous then pb.setContents(previous) end
+    end)
+end
+
+local function transcribe()
+    local key = apiKey()
+    if not key then
+        idle()
+        hs.alert.show("No OpenAI API key found (env OPENAI_API_KEY or " .. KEY_FILE .. ")")
+        return
+    end
+
+    setStatus("transcribing")
+    curlTask = hs.task.new("/usr/bin/curl", function(exitCode, stdOut, stdErr)
+        curlTask = nil
+        local wasAborted = aborted
+        idle()
+        if wasAborted then return end
+        local text = (stdOut or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if exitCode ~= 0 then
+            hs.alert.show("Transcription failed: " .. (stdErr ~= "" and stdErr or text))
+            return
+        end
+        if #text == 0 then return end
+        -- API errors come back as a JSON object even with response_format=text
+        if text:sub(1, 1) == "{" then
+            hs.alert.show("OpenAI error: " .. text:sub(1, 200))
+            return
+        end
+        paste(text)
+    end, (function()
+        local args = {
+            "-s", "--max-time", "60",
+            "https://api.openai.com/v1/audio/transcriptions",
+            "-H", "Authorization: Bearer " .. key,
+            "-F", "file=@" .. AUDIO_FILE,
+            "-F", "model=" .. MODEL,
+            "-F", "response_format=text",
+        }
+        for _, term in ipairs(glossary()) do
+            table.insert(args, "-F")
+            table.insert(args, "keywords[]=" .. term)
+        end
+        return args
+    end)())
+    curlTask:start()
+end
+
+local function startRecording()
+    os.remove(AUDIO_FILE)
+    aborted = false
+    recordTask = hs.task.new(RECORDER, function(exitCode, stdOut, stdErr)
+        recordTask = nil
+        if aborted then
+            idle()
+            SND_ABORT:play()
+            return
+        end
+        if exitCode ~= 0 then
+            idle()
+            hs.alert.show("Recording failed: " .. (stdErr or ""))
+            return
+        end
+        SND_STOP:play()
+        transcribe()
+    end, function(_, stdOut, _)
+        local last
+        for num in (stdOut or ""):gmatch("[-%.%d]+") do last = num end
+        local db = tonumber(last)
+        if db then pill.updateBars(db) end
+        return true
+    end, { AUDIO_FILE })
+    if recordTask:start() then
+        setStatus("recording")
+        escKey:enable()
+        SND_START:play()
+    else
+        recordTask = nil
+        hs.alert.show("Could not start recorder at " .. RECORDER)
+    end
+end
+
+local function stopRecording()
+    if recordTask then
+        recordTask:terminate() -- SIGTERM → recorder finalizes the file and exits 0
+    end
+end
+
+local function abort()
+    aborted = true
+    if recordTask then
+        recordTask:terminate()
+    elseif curlTask then
+        curlTask:terminate()
+        curlTask = nil
+        idle()
+        SND_ABORT:play()
+    end
+end
+
+-- only active while recording/transcribing, so Esc behaves normally otherwise
+escKey = hs.hotkey.new({}, "escape", abort)
+
+hs.hotkey.bind({ "alt" }, "space", function()
+    if recordTask then
+        stopRecording()
+    else
+        startRecording()
+    end
+end)
+
+return M

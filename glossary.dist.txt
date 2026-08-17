@@ -1,0 +1,4 @@
+# Vorlage: nach glossary.txt kopieren und eigene Begriffe eintragen.
+#   cp glossary.dist.txt glossary.txt
+# Ein Name/Fachbegriff pro Zeile — wird der Transcription-API als keywords[] mitgegeben.
+# Zeilen mit '#' und Leerzeilen werden ignoriert. Änderungen gelten sofort (kein Reload nötig).
