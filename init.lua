@@ -76,11 +76,34 @@ local function paste(text)
     end)
 end
 
+local errEsc -- defined below; only active while an error is on screen
+local function showError(msg)
+    local lines = {}
+    for line in msg:gmatch("[^\n]+") do
+        while #line > 72 do
+            local brk = line:sub(1, 72):match(".*()%s") or 72
+            if brk < 40 then brk = 72 end
+            table.insert(lines, (line:sub(1, brk):gsub("%s+$", "")))
+            line = line:sub(brk + 1):gsub("^%s+", "")
+        end
+        if #line > 0 then table.insert(lines, line) end
+    end
+    table.insert(lines, "")
+    table.insert(lines, "(Esc to dismiss)")
+    hs.alert.closeAll(0)
+    hs.alert.show(table.concat(lines, "\n"), { textSize = 14 }, hs.screen.mainScreen(), 1e6)
+    errEsc:enable()
+end
+errEsc = hs.hotkey.new({}, "escape", function()
+    hs.alert.closeAll(0)
+    errEsc:disable()
+end)
+
 local function transcribe()
     local key = apiKey()
     if not key then
         idle()
-        hs.alert.show("No OpenAI API key found (env OPENAI_API_KEY or " .. KEY_FILE .. ")")
+        showError("No OpenAI API key found (env OPENAI_API_KEY or " .. KEY_FILE .. ")")
         return
     end
 
@@ -92,13 +115,13 @@ local function transcribe()
         if wasAborted then return end
         local text = (stdOut or ""):gsub("^%s+", ""):gsub("%s+$", "")
         if exitCode ~= 0 then
-            hs.alert.show("Transcription failed: " .. (stdErr ~= "" and stdErr or text))
+            showError("Transcription failed: " .. (stdErr ~= "" and stdErr or text))
             return
         end
         if #text == 0 then return end
         -- API errors come back as a JSON object even with response_format=text
         if text:sub(1, 1) == "{" then
-            hs.alert.show("OpenAI error: " .. text:sub(1, 200))
+            showError("OpenAI error: " .. text:sub(1, 200))
             return
         end
         paste(text)
@@ -132,7 +155,7 @@ local function startRecording()
         end
         if exitCode ~= 0 then
             idle()
-            hs.alert.show("Recording failed: " .. (stdErr or ""))
+            showError("Recording failed: " .. (stdErr or ""))
             return
         end
         SND_STOP:play()
@@ -150,7 +173,7 @@ local function startRecording()
         SND_START:play()
     else
         recordTask = nil
-        hs.alert.show("Could not start recorder at " .. RECORDER)
+        showError("Could not start recorder at " .. RECORDER)
     end
 end
 
