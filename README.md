@@ -1,4 +1,4 @@
-# whisper-hotkey
+# hammerspoon-whisper
 
 Press **⌥Space** → recording starts (floating pill at the bottom of the screen with a pulsing red dot, "Pop" sound). Press **⌥Space** again → recording stops ("Glass" sound), audio goes to OpenAI (`gpt-transcribe`), and the transcript is pasted at the current text caret. **Esc** aborts while recording or transcribing ("Basso" sound); at any other time Esc behaves normally.
 
@@ -15,7 +15,7 @@ Press **⌥Space** → recording starts (floating pill at the bottom of the scre
 3. `~/.hammerspoon/init.lua` loads this file:
 
    ```lua
-   dofile(os.getenv("HOME") .. "/Documents/GitHub/whisper-hotkey/init.lua")
+   dofile(os.getenv("HOME") .. "/Documents/GitHub/hammerspoon-whisper/init.lua")
    ```
 
 4. Reload the Hammerspoon config (menu bar icon → *Reload Config*).
@@ -31,6 +31,6 @@ Copy `glossary.dist.txt` to `glossary.txt` and add your names and technical term
 
 ## Notes
 
-- Audio is recorded to `/tmp/whisper-hotkey.m4a` (mono, 16 kHz AAC) and deleted after transcription.
+- Audio is recorded to `/tmp/hammerspoon-whisper.m4a` (mono, 16 kHz AAC) and deleted after transcription.
 - The clipboard is used for pasting and restored ~0.5 s afterwards.
 - Change the model or hotkey at the top of `init.lua`.

@@ -1,14 +1,14 @@
--- whisper-hotkey: ⌥Space toggles mic recording; on stop, the audio is sent to
+-- hammerspoon-whisper: ⌥Space toggles mic recording; on stop, the audio is sent to
 -- OpenAI's transcription API and the result is pasted at the current text caret.
 -- Esc aborts while recording or transcribing.
 
 local M = {}
 
-local DIR = os.getenv("HOME") .. "/Documents/GitHub/whisper-hotkey"
+local DIR = os.getenv("HOME") .. "/Documents/GitHub/hammerspoon-whisper"
 package.path = DIR .. "/?.lua;" .. package.path
 local pill = require("pill")
 local RECORDER = DIR .. "/recorder"
-local AUDIO_FILE = "/tmp/whisper-hotkey.m4a"
+local AUDIO_FILE = "/tmp/hammerspoon-whisper.m4a"
 local MODEL = "gpt-transcribe"
 local KEY_FILE = os.getenv("HOME") .. "/.config/openai/api_key"
 local GLOSSARY_FILE = DIR .. "/glossary.txt"
