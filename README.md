@@ -1,6 +1,10 @@
 # hammerspoon-whisper
 
-Press **⌥Space** → recording starts (floating pill at the bottom of the screen with a pulsing red dot, "Pop" sound). Press **⌥Space** again → recording stops ("Glass" sound), audio goes to OpenAI (`gpt-transcribe`), and the transcript is pasted at the current text caret. **Esc** aborts while recording or transcribing ("Basso" sound); at any other time Esc behaves normally.
+System-wide voice dictation for macOS, built on [Hammerspoon](https://www.hammerspoon.org): press a hotkey, speak, and the transcript is typed right where your cursor is — in any app. Audio is captured by a tiny bundled Swift recorder, transcribed by OpenAI's `gpt-transcribe`, and pasted via a synthetic ⌘V. No Xcode project, no signing, no app to install: a couple of Lua files and one compiled helper.
+
+## Usage
+
+Press **⌥Space** → recording starts (a floating pill with a live waveform appears in the center of the screen). Press **⌥Space** again → recording stops, the pill switches to a pulsing dot while the audio is transcribed, and the result is pasted at the current text caret. **Esc** aborts while recording or transcribing; at any other time Esc behaves normally. Each step is confirmed by a distinct sound.
 
 ## Setup
 
