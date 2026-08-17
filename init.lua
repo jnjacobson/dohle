@@ -24,9 +24,9 @@ local escKey -- defined below
 
 local function setStatus(state)
     if state == "recording" then
-        pill.show({ red = 1, green = 0.23, blue = 0.19, alpha = 1 }, true)
+        pill.show({ red = 1, green = 0.23, blue = 0.19, alpha = 1 }, "mic")
     elseif state == "transcribing" then
-        pill.show({ red = 1, green = 0.62, blue = 0.04, alpha = 1 }, false)
+        pill.show({ red = 1, green = 1, blue = 1, alpha = 1 }, "loading")
     else
         pill.hide()
     end

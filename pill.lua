@@ -1,6 +1,6 @@
--- pill.lua: floating status pill (hs.canvas), centered on screen.
--- withBars=true: a small live waveform driven by updateBars().
--- withBars=false: a pulsing dot.
+-- pill.lua: floating status pill (hs.canvas) with five bars, centered on screen.
+-- mode "mic": a live waveform driven by updateBars().
+-- mode "loading": a self-running wave animation.
 
 local M = {}
 
@@ -8,17 +8,17 @@ local BAR_COUNT = 5
 -- attenuation from the center bar outwards
 local BAR_WEIGHTS = { 0.35, 0.7, 1.0, 0.7, 0.35 }
 local canvas = nil
-local hasBars = false
+local micDriven = false
 local level = 0
 local jitters = { 1, 1, 1, 1, 1 }
 local tick = 0
-local pulseTimer = nil
+local loadingTimer = nil
 local BAR_X0 = 17 -- left edge of the first bar, centers the 32px bar block
 
 function M.hide()
-    if pulseTimer then
-        pulseTimer:stop()
-        pulseTimer = nil
+    if loadingTimer then
+        loadingTimer:stop()
+        loadingTimer = nil
     end
     if canvas then
         canvas:delete()
@@ -26,11 +26,10 @@ function M.hide()
     end
 end
 
-function M.show(color, withBars)
+function M.show(color, mode)
     M.hide()
     local sf = hs.screen.mainScreen():frame()
-    local h = 44
-    local w = withBars and 66 or 44
+    local w, h = 66, 44
     canvas = hs.canvas.new({ x = sf.x + (sf.w - w) / 2, y = sf.y + (sf.h - h) / 2, w = w, h = h })
     canvas:appendElements({
         type = "rectangle",
@@ -38,31 +37,28 @@ function M.show(color, withBars)
         roundedRectRadii = { xRadius = h / 2, yRadius = h / 2 },
         fillColor = { red = 0, green = 0, blue = 0, alpha = 1 },
     })
-    hasBars = withBars
+    micDriven = (mode == "mic")
     level = 0
-    if withBars then
-        for i = 1, BAR_COUNT do
-            canvas:appendElements({
-                type = "rectangle",
-                action = "fill",
-                roundedRectRadii = { xRadius = 2, yRadius = 2 },
-                fillColor = color,
-                frame = { x = BAR_X0 + (i - 1) * 7, y = h / 2 - 3, w = 4, h = 6 },
-            })
-        end
-    else
+    for i = 1, BAR_COUNT do
         canvas:appendElements({
-            type = "oval",
+            type = "rectangle",
             action = "fill",
+            roundedRectRadii = { xRadius = 2, yRadius = 2 },
             fillColor = color,
-            frame = { x = w / 2 - 7, y = h / 2 - 7, w = 14, h = 14 },
+            frame = { x = BAR_X0 + (i - 1) * 7, y = h / 2 - 3, w = 4, h = 6 },
         })
+    end
+    if mode == "loading" then
+        -- a sine wave travels across the bars
         local phase = 0
-        pulseTimer = hs.timer.doEvery(0.05, function()
+        loadingTimer = hs.timer.doEvery(0.05, function()
             if not canvas then return end
             phase = phase + 0.5
-            local alpha = 0.4 + 0.55 * (math.sin(phase) + 1) / 2
-            canvas[2].fillColor = { red = color.red, green = color.green, blue = color.blue, alpha = alpha }
+            for i = 1, BAR_COUNT do
+                local v = (math.sin(phase - (i - 1) * 0.7) + 1) / 2
+                local bh = 8 + v * 14
+                canvas[1 + i].frame = { x = BAR_X0 + (i - 1) * 7, y = h / 2 - bh / 2, w = 4, h = bh }
+            end
         end)
     end
     canvas:level("status")
@@ -73,7 +69,7 @@ end
 -- waveform: the center bar follows the mic level (dBFS), the outer bars
 -- mirror it with decreasing height so the motion fades out to both sides
 function M.updateBars(db)
-    if not canvas or not hasBars then return end
+    if not canvas or not micDriven then return end
     -- RMS scale: quiet room is ~-60..-50 dB; normal speech should hit ~1.0
     local target = math.max(0, math.min(1, (db + 48) / 20))
     level = level + (target - level) * 0.9
