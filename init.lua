@@ -91,7 +91,7 @@ local function showError(msg)
     table.insert(lines, "")
     table.insert(lines, "(Esc to dismiss)")
     hs.alert.closeAll(0)
-    hs.alert.show(table.concat(lines, "\n"), { textSize = 14 }, hs.screen.mainScreen(), 1e6)
+    hs.alert.show(table.concat(lines, "\n"), { textSize = 14, padding = 18 }, hs.screen.mainScreen(), 1e6)
     errEsc:enable()
 end
 errEsc = hs.hotkey.new({}, "escape", function()
