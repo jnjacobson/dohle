@@ -16,10 +16,10 @@ Press **⌥Space** → recording starts (a floating pill with a live waveform ap
 
 2. Put your OpenAI API key in `~/.config/openai/api_key` (single line, `chmod 600`).
 
-3. `~/.hammerspoon/init.lua` loads this file:
+3. `~/.hammerspoon/init.lua` loads this file (adjust the path to wherever you cloned the repo):
 
    ```lua
-   dofile(os.getenv("HOME") .. "/Documents/GitHub/hammerspoon-whisper/init.lua")
+   dofile(os.getenv("HOME") .. "/path/to/hammerspoon-whisper/init.lua")
    ```
 
 4. Reload the Hammerspoon config (menu bar icon → *Reload Config*).

@@ -4,7 +4,7 @@
 
 local M = {}
 
-local DIR = os.getenv("HOME") .. "/Documents/GitHub/hammerspoon-whisper"
+local DIR = debug.getinfo(1, "S").source:sub(2):match("(.*)/")
 package.path = DIR .. "/?.lua;" .. package.path
 local pill = require("pill")
 local RECORDER = DIR .. "/recorder"
