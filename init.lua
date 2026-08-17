@@ -11,7 +11,7 @@ local RECORDER = DIR .. "/recorder"
 local AUDIO_FILE = "/tmp/hammerspoon-whisper.m4a"
 local MODEL = "gpt-transcribe"
 local KEY_FILE = os.getenv("HOME") .. "/.config/openai/api_key"
-local GLOSSARY_FILE = DIR .. "/glossary.txt"
+local CONFIG_FILE = DIR .. "/config.json"
 
 local SND_START = hs.sound.getByName("Purr")
 local SND_STOP = hs.sound.getByName("Pop")
@@ -50,21 +50,6 @@ local function apiKey()
     return nil
 end
 
--- glossary.txt: one name/term per line, '#' for comments; sent as keywords[]
-local function glossary()
-    local terms = {}
-    local f = io.open(GLOSSARY_FILE, "r")
-    if not f then return terms end
-    for line in f:lines() do
-        line = line:gsub("^%s+", ""):gsub("%s+$", "")
-        if #line > 0 and line:sub(1, 1) ~= "#" then
-            table.insert(terms, line)
-        end
-    end
-    f:close()
-    return terms
-end
-
 local function paste(text)
     local pb = hs.pasteboard
     local previous = pb.getContents()
@@ -98,6 +83,20 @@ errEsc = hs.hotkey.new({}, "escape", function()
     hs.alert.closeAll(0)
     errEsc:disable()
 end)
+
+-- config.json (see config.dist.json): read on every transcription — no reload needed
+local function config()
+    local f = io.open(CONFIG_FILE, "r")
+    if not f then return {} end
+    local raw = f:read("*a")
+    f:close()
+    local ok, cfg = pcall(hs.json.decode, raw)
+    if not ok or type(cfg) ~= "table" then
+        showError("Invalid JSON in " .. CONFIG_FILE)
+        return {}
+    end
+    return cfg
+end
 
 local function transcribe()
     local key = apiKey()
@@ -134,9 +133,14 @@ local function transcribe()
             "-F", "model=" .. MODEL,
             "-F", "response_format=text",
         }
-        for _, term in ipairs(glossary()) do
+        local cfg = config()
+        for _, term in ipairs(cfg.glossary or {}) do
             table.insert(args, "-F")
             table.insert(args, "keywords[]=" .. term)
+        end
+        for _, lang in ipairs(cfg.languages or {}) do
+            table.insert(args, "-F")
+            table.insert(args, "languages[]=" .. lang)
         end
         return args
     end)())

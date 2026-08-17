@@ -29,9 +29,14 @@ Press **⌥Space** → recording starts (a floating pill with a live waveform ap
 - **Accessibility** — Hammerspoon asks on first launch; needed for the synthetic ⌘V.
 - **Microphone** — macOS prompts for Hammerspoon on the first recording.
 
-## Glossary
+## Configuration
 
-Copy `glossary.dist.txt` to `glossary.txt` and add your names and technical terms (one per line, `#` for comments). They are sent to the API as `keywords[]` so the model spells them correctly. The file is read on every transcription — no reload needed. `glossary.txt` is gitignored, so everyone keeps their own list.
+Copy `config.dist.json` to `config.json` and fill in:
+
+- `languages` — language codes sent as `languages[]` to hint what you speak (e.g. `["de", "en"]`).
+- `glossary` — names and technical terms sent as `keywords[]` so the model spells them correctly.
+
+The file is read on every transcription — no reload needed. `config.json` is gitignored, so everyone keeps their own settings.
 
 ## Notes
 
