@@ -33,6 +33,7 @@ Press **⌥Space** → recording starts (a floating pill with a live waveform ap
 
 Copy `config.dist.json` to `config.json` and fill in:
 
+- `microphone` — preferred input device for recording (case-insensitive substring of the device name; `./recorder --list` prints all input devices). Empty or missing = system default. If the default input is unusable (e.g. AirPods busy on another device), the recorder falls back to the built-in mic.
 - `languages` — language codes sent as `languages[]` to hint what you speak (e.g. `["de", "en"]`).
 - `glossary` — names and technical terms sent as `keywords[]` so the model spells them correctly.
 

@@ -70,9 +70,10 @@ end
 -- mirror it with decreasing height so the motion fades out to both sides
 function M.updateBars(db)
     if not canvas or not micDriven then return end
-    -- RMS scale: quiet room is ~-60..-50 dB; normal speech should hit ~1.0
+    -- RMS scale: quiet room is ~-70 dB (post-16kHz-downsampling); speech hits ~1.0
     local target = math.max(0, math.min(1, (db + 48) / 20))
-    level = level + (target - level) * 0.9
+    -- fast attack, slow release: bars jump up with speech but sink gently in pauses
+    level = level + (target - level) * (target > level and 0.9 or 0.25)
     -- per-bar jitter keeps the bars from moving in lockstep;
     -- refreshed only every 4th tick (5x/s) so it wobbles instead of flickering
     tick = tick + 1

@@ -84,7 +84,7 @@ errEsc = hs.hotkey.new({}, "escape", function()
     errEsc:disable()
 end)
 
--- config.json (see config.dist.json): read on every transcription — no reload needed
+-- config.json (see config.dist.json): read on every recording/transcription — no reload needed
 local function config()
     local f = io.open(CONFIG_FILE, "r")
     if not f then return {} end
@@ -150,6 +150,11 @@ end
 local function startRecording()
     os.remove(AUDIO_FILE)
     aborted = false
+    local recorderArgs = { AUDIO_FILE }
+    local mic = config().microphone
+    if type(mic) == "string" and #mic > 0 then
+        table.insert(recorderArgs, mic)
+    end
     recordTask = hs.task.new(RECORDER, function(exitCode, stdOut, stdErr)
         recordTask = nil
         if aborted then
@@ -170,7 +175,7 @@ local function startRecording()
         local db = tonumber(last)
         if db then pill.updateBars(db) end
         return true
-    end, { AUDIO_FILE })
+    end, recorderArgs)
     if recordTask:start() then
         setStatus("recording")
         escKey:enable()
