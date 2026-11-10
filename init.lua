@@ -1,4 +1,4 @@
--- hammerspoon-whisper: ⌥Space toggles mic recording; on stop, the audio is sent to
+-- sittich: ⌥Space toggles mic recording; on stop, the audio is sent to
 -- OpenAI's transcription API and the result is pasted at the current text caret.
 -- Esc aborts while recording or transcribing.
 
@@ -8,7 +8,7 @@ local DIR = debug.getinfo(1, "S").source:sub(2):match("(.*)/")
 package.path = DIR .. "/?.lua;" .. package.path
 local pill = require("pill")
 local RECORDER = DIR .. "/recorder"
-local AUDIO_FILE = "/tmp/hammerspoon-whisper.m4a"
+local AUDIO_FILE = "/tmp/sittich.m4a"
 local MODEL = "gpt-transcribe"
 local KEY_FILE = os.getenv("HOME") .. "/.config/openai/api_key"
 local CONFIG_FILE = DIR .. "/config.json"

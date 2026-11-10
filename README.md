@@ -1,4 +1,6 @@
-# hammerspoon-whisper
+# sittich
+
+> sittich (German for "parakeet", pronounced /ˈzɪtɪç/)
 
 System-wide voice dictation for macOS, built on [Hammerspoon](https://www.hammerspoon.org): press a hotkey, speak, and the transcript is typed right where your cursor is — in any app. Audio is captured by a tiny bundled Swift recorder, transcribed by OpenAI's `gpt-transcribe`, and pasted via a synthetic ⌘V. No Xcode project, no signing, no app to install: a couple of Lua files and one compiled helper.
 
@@ -19,7 +21,7 @@ Press **⌥Space** → recording starts (a floating pill with a live waveform ap
 3. `~/.hammerspoon/init.lua` loads this file (adjust the path to wherever you cloned the repo):
 
    ```lua
-   dofile(os.getenv("HOME") .. "/path/to/hammerspoon-whisper/init.lua")
+   dofile(os.getenv("HOME") .. "/path/to/sittich/init.lua")
    ```
 
 4. Reload the Hammerspoon config (menu bar icon → *Reload Config*).
@@ -41,6 +43,6 @@ The file is read on every transcription — no reload needed. `config.json` is g
 
 ## Notes
 
-- Audio is recorded to `/tmp/hammerspoon-whisper.m4a` (mono, 16 kHz AAC) and deleted after transcription.
+- Audio is recorded to `/tmp/sittich.m4a` (mono, 16 kHz AAC) and deleted after transcription.
 - The clipboard is used for pasting and restored ~0.5 s afterwards.
 - Change the model or hotkey at the top of `init.lua`.
